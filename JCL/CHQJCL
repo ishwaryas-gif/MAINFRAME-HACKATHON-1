@@ -1,0 +1,15 @@
+//CHQJB  JOB (CHEQUE), 'RUN COBOL CHQ',CLASS=A,MSGCLASS=A  
+//            NOTIFY=&SYSUID                               
+//STEP1  EXEC IGYWCL,PARM.COBOL='LIB,APOST'                
+//COBOL.SYSIN DD DSN=Z71118.ISHU.COBOL(CHQCLEAR),DISP=SHR  
+//COBOL.SYSLIB DD DSN=Z71118.ISHU.COBOL,DISP=SHR           
+//*                                                        
+//LKED.SYSLMOD DD DSN=Z71118.ISHU.LOAD(CHQCLEAR),DISP=SHR  
+//LKED.SYSLIB  DD DSN=Z71118.ISHU.LOAD,DISP=SHR            
+//*                                                        
+//STEP2  EXEC PGM=CHQCLEAR                                 
+//STEPLIB  DD DSN=Z71118.ISHU.LOAD,DISP=SHR                
+//CHQFILE  DD DSN=Z71118.ISHU.INPUT,DISP=SHR               
+//ACCMAS   DD DSN=Z71118.ISHU.KSDS,DISP=SHR                
+//SYSOUT   DD SYSOUT=*                                     
+//SYSPRINT DD SYSOUT=*                                     
