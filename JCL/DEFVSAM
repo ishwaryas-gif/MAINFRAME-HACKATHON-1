@@ -1,0 +1,32 @@
+//DEFVSAM  JOB (CHEQUE),'CREATE VSAM',CLASS=A,MSGCLASS=A,
+//             NOTIFY=&SYSUID                            
+//*                                                      
+//JOBLIB   DD DSN=Z71118.ISHU.JCL,DISP=SHR               
+//STEP0    EXEC PGM=IDCAMS                               
+//SYSPRINT DD SYSOUT=*                                   
+//SYSIN    DD *                                          
+   DELETE Z71118.ISHU.KSDS CLUSTER                       
+   SET MAXCC=0                                           
+/*                                                       
+//*                                                      
+//STEP1    EXEC PGM=IDCAMS                               
+//SYSPRINT DD SYSOUT=*                                   
+//SYSIN    DD *                                          
+    DEFINE CLUSTER(NAME(Z71118.ISHU.KSDS)   -            
+           INDEXED                          -            
+           KEYS(10,0)                       -            
+           RECORDSIZE(80,80)                -            
+           TRACKS(1,1)                      -            
+           CISZ(4096)                       -            
+           FREESPACE(3 3))                  -            
+    DATA(NAME(Z71118.ISHU.KSDS.DATA))       -            
+    INDEX(NAME(Z71118.ISHU.KSDS.INDEX))                  
+/*                                                       
+//STEP2    EXEC PGM=IDCAMS                               
+//SYSPRINT DD SYSOUT=*                              
+//IN       DD DSN=Z71118.ISHU.DATA(ACCFILE),DISP=SHR
+//OUT  DD DSN=Z71118.ISHU.KSDS,DISP=SHR             
+//SYSIN  DD *                                       
+   REPRO INFILE(IN) -                               
+   OUTFILE(OUT)                                     
+/*                                                  
