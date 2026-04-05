@@ -1,0 +1,89 @@
+IDENTIFICATION DIVISION.                 
+PROGRAM-ID. CHQCLEAR.                    
+AUTHOR. ISHU.                            
+ENVIRONMENT DIVISION.                    
+INPUT-OUTPUT SECTION.                    
+FILE-CONTROL.                            
+    SELECT CHQ-FILE ASSIGN TO CHQFILE    
+           ORGANIZATION IS SEQUENTIAL    
+           FILE STATUS IS WS-CHQ-STATUS. 
+    SELECT ACC-FILE ASSIGN TO ACCMAS     
+           ORGANIZATION IS INDEXED       
+           ACCESS MODE IS RANDOM         
+           RECORD KEY IS ACC-NO          
+           FILE STATUS IS WS-ACC-STATUS. 
+DATA DIVISION.                           
+FILE SECTION.                            
+FD ACC-FILE.                             
+01 ACC-REC.                              
+   05 ACC-NO  PIC X(10).                 
+   05 ACC-NAME  PIC X(20).               
+   05 ACC-TYPE  PIC X(1).                
+   05 ACC-BAL  PIC 9(9).                 
+   05 ACC-STATUS  PIC X(1).              
+   05 ACC-FILLER  PIC X(39).             
+FD CHQ-FILE.                             
+01 CHQ-REC.                             
+   05 CHQ-ACC-NO  PIC X(10).            
+   05 CHQ-AMT  PIC 9(9).                
+WORKING-STORAGE SECTION.                
+01 WS-ACC-STATUS  PIC XX.               
+01 WS-CHQ-STATUS  PIC XX.               
+01 WS-EOF  PIC X(1) VALUE 'N'.          
+01 WS-TOTAL  PIC 9(4) VALUE 0.          
+01 WS-CLEARED  PIC 9(4) VALUE 0.        
+01 WS-FAILED  PIC 9(4) VALUE 0.         
+01 WS-BOUNCED  PIC 9(4) VALUE 0.        
+01 WS-CHARGE  PIC 9(4) VALUE 350.       
+01 WS-TOTAL-CHARGE  PIC 9(9) VALUE 0.   
+PROCEDURE DIVISION.                     
+MAIN-PARA.                              
+    OPEN INPUT CHQ-FILE                 
+    OPEN I-O ACC-FILE                   
+    DISPLAY "ACC STATUS" WS-ACC-STATUS  
+    DISPLAY "CHQ STATUS" WS-CHQ-STATUS  
+    PERFORM UNTIL WS-EOF = 'Y'          
+      READ CHQ-FILE                     
+      AT END                            
+        MOVE 'Y' TO WS-EOF              
+      NOT AT END                        
+        ADD 1 TO WS-TOTAL               
+        PERFORM PROCESS-CHQ             
+       END-READ                             
+     END-PERFORM                            
+     PERFORM DISPLAY-MSG                    
+     CLOSE CHQ-FILE ACC-FILE                
+     STOP RUN.                              
+ PROCESS-CHQ.                                     
+     MOVE CHQ-ACC-NO TO ACC-NO                        
+     READ ACC-FILE                          
+       INVALID KEY                              
+         ADD 1 TO WS-FAILED                 
+       NOT INVALID KEY                         
+         PERFORM ACC-VALIDATE               
+     END-READ                               
+     DISPLAY WS-ACC-STATUS.                 
+ ACC-VALIDATE.                              
+     IF ACC-STATUS NOT = 'A'                
+       ADD 1 TO WS-FAILED                   
+     ELSE                                   
+       IF CHQ-AMT > ACC-BAL                 
+         SUBTRACT WS-CHARGE FROM ACC-BAL    
+         ADD WS-CHARGE TO WS-TOTAL-CHARGE
+         ADD 1 TO WS-FAILED            
+         ADD 1 TO WS-BOUNCED           
+       ELSE                            
+         SUBTRACT CHQ-AMT FROM ACC-BAL 
+         ADD 1 TO WS-CLEARED   
+       END-IF                                              
+       REWRITE ACC-REC                                     
+     END-IF.                                               
+ DISPLAY-MSG.                                              
+     DISPLAY "--------- CHEQUE CLEARING SUMMARY ---------" 
+     DISPLAY "Total Cheques      : " WS-TOTAL              
+     DISPLAY "Cleared            : " WS-CLEARED            
+     DISPLAY "Bounced            : " WS-BOUNCED            
+     DISPLAY "Failed             : " WS-FAILED             
+     DISPLAY "Bounce Charges     : " WS-TOTAL-CHARGE       
+     DISPLAY "Batch Completed Successfully"                
+     DISPLAY "-------------------------------------------".
